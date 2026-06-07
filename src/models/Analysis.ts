@@ -22,15 +22,36 @@ const insightSchema = new Schema(
   { _id: false }
 );
 
+const actionItemSchema = new Schema(
+  {
+    task: {
+      type: String,
+      required: true,
+    },
+
+    assignee: {
+      type: String,
+      required: true,
+    },
+
+    citations: [citationSchema],
+  },
+  { _id: false }
+);
+
 const analysisSchema = new Schema(
   {
     meetingId: {
       type: Schema.Types.ObjectId,
       ref: "Meeting",
       required: true,
+      unique: true,
+      index: true,
     },
 
     summary: [insightSchema],
+
+    actionItems: [actionItemSchema],
 
     decisions: [insightSchema],
 
