@@ -42,6 +42,22 @@ app.use("/api/action-items", actionItemRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 
 
+app.get("/", (req, res) => {
+  res.json({
+    name: "Hintro Meeting Intelligence API",
+    version: "1.0.0",
+    status: "running",
+    docs: "/api-docs",
+    endpoints: {
+      auth: "/api/auth",
+      meetings: "/api/meetings",
+      actionItems: "/api/action-items",
+      evaluation: "/api/evaluation",
+      health: "/health",
+    },
+  });
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "UP",
