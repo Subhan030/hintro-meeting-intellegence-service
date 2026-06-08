@@ -108,19 +108,7 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
 }
 \`\`\`
 
-## Support
-- Documentation: See /api-docs
-- Test Suite: 146 tests (93.8% passing)
-- Version: 1.0.0
-      `,
-      contact: {
-        name: "Hintro Backend Team",
-        email: "raisubhan728@gmail.com",
-      },
-      license: {
-        name: "MIT",
-        url: "https://opensource.org/licenses/MIT",
-      },
+      `
     },
     servers: [
       {
@@ -382,16 +370,31 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                   type: "object",
                   required: ["email", "password"],
                   properties: {
-                    email: { type: "string", format: "email", example: "user@example.com" },
-                    password: { type: "string", minLength: 6, example: "SecurePass123!" },
+                    email: { type: "string", format: "email" },
+                    password: { type: "string", minLength: 6 },
                   },
+                },
+                example: {
+                  email: "alice@example.com",
+                  password: "SecurePass123!",
                 },
               },
             },
           },
           responses: {
-            "201": { description: "User registered successfully" },
-            "400": { description: "Validation error or email already exists", $ref: "#/components/schemas/Error" },
+            "201": {
+              description: "User registered successfully",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: { message: "User registered successfully" },
+                  },
+                },
+              },
+            },
+            "400": { description: "Validation error or email already exists" },
           },
         },
       },
@@ -408,9 +411,13 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                   type: "object",
                   required: ["email", "password"],
                   properties: {
-                    email: { type: "string", format: "email", example: "user@example.com" },
-                    password: { type: "string", example: "SecurePass123!" },
+                    email: { type: "string", format: "email" },
+                    password: { type: "string" },
                   },
+                },
+                example: {
+                  email: "alice@example.com",
+                  password: "SecurePass123!",
                 },
               },
             },
@@ -420,17 +427,10 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
               description: "Login successful — returns JWT token",
               content: {
                 "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      success: { type: "boolean", example: true },
-                      data: {
-                        type: "object",
-                        properties: {
-                          token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
-                        },
-                      },
-                    },
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: { token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
                   },
                 },
               },
@@ -445,12 +445,36 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           summary: "Get all meetings (paginated)",
           security: [{ BearerAuth: [] }],
           parameters: [
-            { in: "query", name: "page", schema: { type: "integer", default: 1 } },
-            { in: "query", name: "limit", schema: { type: "integer", default: 10 } },
-            { in: "query", name: "sort", schema: { type: "string", example: "-createdAt" } },
+            { in: "query", name: "page", schema: { type: "integer", default: 1 }, example: 1 },
+            { in: "query", name: "limit", schema: { type: "integer", default: 10 }, example: 10 },
+            { in: "query", name: "sort", schema: { type: "string" }, example: "-createdAt" },
           ],
           responses: {
-            "200": { description: "List of meetings" },
+            "200": {
+              description: "List of meetings",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      meetings: [
+                        {
+                          _id: "507f1f77bcf86cd799439011",
+                          title: "Sprint Planning",
+                          participants: ["Alice", "Bob"],
+                          meetingDate: "2024-06-07T10:00:00Z",
+                          analysisStatus: "PENDING",
+                        },
+                      ],
+                      total: 1,
+                      page: 1,
+                      limit: 10,
+                    },
+                  },
+                },
+              },
+            },
             "401": { description: "Unauthorized" },
           },
         },
@@ -466,9 +490,9 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                   type: "object",
                   required: ["title", "transcript"],
                   properties: {
-                    title: { type: "string", example: "Product Planning Meeting" },
-                    participants: { type: "array", items: { type: "string" }, example: ["Alice", "Bob"] },
-                    meetingDate: { type: "string", format: "date-time", example: "2024-06-07T10:00:00Z" },
+                    title: { type: "string" },
+                    participants: { type: "array", items: { type: "string" } },
+                    meetingDate: { type: "string", format: "date-time" },
                     transcript: {
                       type: "array",
                       minItems: 1,
@@ -476,12 +500,43 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                     },
                   },
                 },
+                example: {
+                  title: "Sprint Planning Meeting",
+                  participants: ["Alice", "Bob", "Charlie"],
+                  meetingDate: "2024-06-07T10:00:00Z",
+                  transcript: [
+                    { timestamp: "00:01", speaker: "Alice", text: "Let's aim to ship the new dashboard by end of next week." },
+                    { timestamp: "00:45", speaker: "Bob", text: "I'll handle the frontend. Should be done by Thursday." },
+                    { timestamp: "01:10", speaker: "Charlie", text: "I can take care of the API integration. I'll need the design specs first." },
+                    { timestamp: "02:00", speaker: "Alice", text: "Agreed. We'll go with a two-week sprint. Meeting adjourned." },
+                  ],
+                },
               },
             },
           },
           responses: {
-            "201": { description: "Meeting created" },
-            "400": { description: "Validation error" },
+            "201": {
+              description: "Meeting created",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      _id: "507f1f77bcf86cd799439011",
+                      title: "Sprint Planning Meeting",
+                      participants: ["Alice", "Bob", "Charlie"],
+                      meetingDate: "2024-06-07T10:00:00Z",
+                      analysisStatus: "PENDING",
+                      transcript: [
+                        { timestamp: "00:01", speaker: "Alice", text: "Let's aim to ship the new dashboard by end of next week." },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+            "400": { description: "Validation error — title or transcript missing/invalid" },
             "401": { description: "Unauthorized" },
           },
         },
@@ -493,7 +548,31 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           security: [{ BearerAuth: [] }],
           parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
           responses: {
-            "200": { description: "Meeting details" },
+            "200": {
+              description: "Meeting details",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      _id: "507f1f77bcf86cd799439011",
+                      title: "Sprint Planning Meeting",
+                      participants: ["Alice", "Bob", "Charlie"],
+                      meetingDate: "2024-06-07T10:00:00Z",
+                      analysisStatus: "COMPLETED",
+                      summary: [{ text: "Team agreed to ship the dashboard by end of next week", citations: [{ timestamp: "00:01" }] }],
+                      actionItems: [
+                        { task: "Handle frontend implementation", assignee: "Bob", citations: [{ timestamp: "00:45" }] },
+                        { task: "Obtain design specs and complete API integration", assignee: "Charlie", citations: [{ timestamp: "01:10" }] },
+                      ],
+                      decisions: [{ text: "Two-week sprint format agreed", citations: [{ timestamp: "02:00" }] }],
+                      followUps: [{ text: "Alice to send design specs to Charlie", citations: [{ timestamp: "01:10" }] }],
+                    },
+                  },
+                },
+              },
+            },
             "404": { description: "Meeting not found" },
           },
         },
@@ -501,7 +580,7 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           tags: ["Meetings"],
           summary: "Update a meeting",
           security: [{ BearerAuth: [] }],
-          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
           requestBody: {
             content: {
               "application/json": {
@@ -514,11 +593,26 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                     transcript: { type: "array", items: { $ref: "#/components/schemas/TranscriptSegment" } },
                   },
                 },
+                example: {
+                  title: "Sprint Planning Meeting — Revised",
+                  participants: ["Alice", "Bob", "Charlie", "Dave"],
+                },
               },
             },
           },
           responses: {
-            "200": { description: "Meeting updated" },
+            "200": {
+              description: "Meeting updated",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: { _id: "507f1f77bcf86cd799439011", title: "Sprint Planning Meeting — Revised" },
+                  },
+                },
+              },
+            },
             "404": { description: "Meeting not found" },
           },
         },
@@ -526,9 +620,16 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           tags: ["Meetings"],
           summary: "Delete a meeting",
           security: [{ BearerAuth: [] }],
-          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
           responses: {
-            "200": { description: "Meeting deleted" },
+            "200": {
+              description: "Meeting deleted",
+              content: {
+                "application/json": {
+                  example: { traceId: "abc-123-def-456", success: true, data: { message: "Meeting deleted" } },
+                },
+              },
+            },
             "404": { description: "Meeting not found" },
           },
         },
@@ -537,13 +638,39 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
         post: {
           tags: ["AI Analysis"],
           summary: "Analyze a meeting with Groq AI",
-          description: "Triggers AI analysis extracting summary, action items, decisions, and follow-ups with transcript citations.",
+          description: "No request body required. Triggers AI analysis and saves summary, action items, decisions, and follow-ups with transcript citations back to the meeting document.",
           security: [{ BearerAuth: [] }],
           parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
           responses: {
-            "200": { description: "Analysis complete — meeting updated with AI insights" },
+            "200": {
+              description: "Analysis complete — meeting updated with AI insights",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      analysisStatus: "COMPLETED",
+                      summary: [
+                        { text: "Team agreed to ship the dashboard by end of next week", citations: [{ timestamp: "00:01" }] },
+                      ],
+                      actionItems: [
+                        { task: "Handle frontend implementation", assignee: "Bob", citations: [{ timestamp: "00:45" }] },
+                        { task: "Obtain design specs and complete API integration", assignee: "Charlie", citations: [{ timestamp: "01:10" }] },
+                      ],
+                      decisions: [
+                        { text: "Two-week sprint format agreed", citations: [{ timestamp: "02:00" }] },
+                      ],
+                      followUps: [
+                        { text: "Alice to send design specs to Charlie before Thursday", citations: [{ timestamp: "01:10" }] },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
             "404": { description: "Meeting not found" },
-            "500": { description: "AI analysis failed" },
+            "500": { description: "AI analysis failed (check GROQ_API_KEY)" },
           },
         },
       },
@@ -553,12 +680,36 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           summary: "Get all action items",
           security: [{ BearerAuth: [] }],
           parameters: [
-            { in: "query", name: "status", schema: { type: "string", enum: ["PENDING", "IN_PROGRESS", "COMPLETED"] } },
-            { in: "query", name: "page", schema: { type: "integer", default: 1 } },
-            { in: "query", name: "limit", schema: { type: "integer", default: 10 } },
+            { in: "query", name: "status", schema: { type: "string", enum: ["PENDING", "IN_PROGRESS", "COMPLETED"] }, example: "PENDING" },
+            { in: "query", name: "page", schema: { type: "integer", default: 1 }, example: 1 },
+            { in: "query", name: "limit", schema: { type: "integer", default: 10 }, example: 10 },
           ],
           responses: {
-            "200": { description: "List of action items" },
+            "200": {
+              description: "List of action items",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      actionItems: [
+                        {
+                          _id: "507f1f77bcf86cd799439022",
+                          task: "Handle frontend implementation",
+                          assignee: "Bob",
+                          status: "PENDING",
+                          dueDate: "2024-06-15T10:00:00Z",
+                          meetingId: "507f1f77bcf86cd799439011",
+                          reminderHistory: [],
+                        },
+                      ],
+                      total: 1,
+                    },
+                  },
+                },
+              },
+            },
             "401": { description: "Unauthorized" },
           },
         },
@@ -574,18 +725,43 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                   type: "object",
                   required: ["task", "meetingId"],
                   properties: {
-                    task: { type: "string", example: "Prepare release notes" },
-                    assignee: { type: "string", example: "Bob" },
+                    task: { type: "string" },
+                    assignee: { type: "string" },
                     dueDate: { type: "string", format: "date-time" },
-                    meetingId: { type: "string", example: "507f1f77bcf86cd799439011" },
+                    meetingId: { type: "string" },
                   },
+                },
+                example: {
+                  task: "Prepare release notes for v2.0",
+                  assignee: "Bob",
+                  dueDate: "2024-06-15T10:00:00Z",
+                  meetingId: "507f1f77bcf86cd799439011",
                 },
               },
             },
           },
           responses: {
-            "201": { description: "Action item created" },
-            "400": { description: "Validation error" },
+            "201": {
+              description: "Action item created",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      _id: "507f1f77bcf86cd799439022",
+                      task: "Prepare release notes for v2.0",
+                      assignee: "Bob",
+                      status: "PENDING",
+                      dueDate: "2024-06-15T10:00:00Z",
+                      meetingId: "507f1f77bcf86cd799439011",
+                      reminderHistory: [],
+                    },
+                  },
+                },
+              },
+            },
+            "400": { description: "Validation error — task or meetingId missing" },
           },
         },
       },
@@ -593,9 +769,31 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
         get: {
           tags: ["Action Items"],
           summary: "Get overdue action items",
+          description: "Returns items whose dueDate is in the past and status is not COMPLETED.",
           security: [{ BearerAuth: [] }],
           responses: {
-            "200": { description: "List of overdue action items" },
+            "200": {
+              description: "List of overdue action items",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: [
+                      {
+                        _id: "507f1f77bcf86cd799439022",
+                        task: "Prepare release notes for v2.0",
+                        assignee: "Bob",
+                        status: "PENDING",
+                        dueDate: "2024-05-01T10:00:00Z",
+                        meetingId: "507f1f77bcf86cd799439011",
+                        reminderHistory: [{ sentAt: "2024-05-02T10:00:00Z", channel: "telegram" }],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -604,9 +802,28 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           tags: ["Action Items"],
           summary: "Get action item by ID",
           security: [{ BearerAuth: [] }],
-          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439022" }],
           responses: {
-            "200": { description: "Action item details" },
+            "200": {
+              description: "Action item details",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      _id: "507f1f77bcf86cd799439022",
+                      task: "Prepare release notes for v2.0",
+                      assignee: "Bob",
+                      status: "IN_PROGRESS",
+                      dueDate: "2024-06-15T10:00:00Z",
+                      meetingId: "507f1f77bcf86cd799439011",
+                      reminderHistory: [],
+                    },
+                  },
+                },
+              },
+            },
             "404": { description: "Not found" },
           },
         },
@@ -614,9 +831,16 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
           tags: ["Action Items"],
           summary: "Delete an action item",
           security: [{ BearerAuth: [] }],
-          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439022" }],
           responses: {
-            "200": { description: "Deleted successfully" },
+            "200": {
+              description: "Deleted successfully",
+              content: {
+                "application/json": {
+                  example: { traceId: "abc-123-def-456", success: true, data: { message: "Action item deleted" } },
+                },
+              },
+            },
             "404": { description: "Not found" },
           },
         },
@@ -625,8 +849,9 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
         patch: {
           tags: ["Action Items"],
           summary: "Update action item status",
+          description: "Valid transitions: PENDING → IN_PROGRESS → COMPLETED",
           security: [{ BearerAuth: [] }],
-          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439022" }],
           requestBody: {
             required: true,
             content: {
@@ -638,11 +863,28 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
                     status: { type: "string", enum: ["PENDING", "IN_PROGRESS", "COMPLETED"] },
                   },
                 },
+                example: { status: "IN_PROGRESS" },
               },
             },
           },
           responses: {
-            "200": { description: "Status updated" },
+            "200": {
+              description: "Status updated",
+              content: {
+                "application/json": {
+                  example: {
+                    traceId: "abc-123-def-456",
+                    success: true,
+                    data: {
+                      _id: "507f1f77bcf86cd799439022",
+                      task: "Prepare release notes for v2.0",
+                      assignee: "Bob",
+                      status: "IN_PROGRESS",
+                    },
+                  },
+                },
+              },
+            },
             "400": { description: "Invalid status transition" },
           },
         },
@@ -667,12 +909,9 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
               description: "Service is up",
               content: {
                 "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      status: { type: "string", example: "UP" },
-                      timestamp: { type: "string", format: "date-time" },
-                    },
+                  example: {
+                    status: "UP",
+                    timestamp: "2024-06-07T10:00:00.000Z",
                   },
                 },
               },
