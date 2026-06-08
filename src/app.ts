@@ -32,14 +32,26 @@ app.use(
 
 app.use(traceMiddleware);
 
+// Lazy DB connection middleware — safe for serverless cold starts
+const dbMiddleware = async (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 setupSwagger(app);
 
-
-app.use("/api/auth", authRoutes);
-app.use("/api/meetings", meetingRoutes);
-app.use("/api/action-items", actionItemRoutes);
-app.use("/api/evaluation", evaluationRoutes);
+app.use("/api/auth", dbMiddleware, authRoutes);
+app.use("/api/meetings", dbMiddleware, meetingRoutes);
+app.use("/api/action-items", dbMiddleware, actionItemRoutes);
+app.use("/api/evaluation", dbMiddleware, evaluationRoutes);
 
 
 app.get("/", (req, res) => {
@@ -72,13 +84,14 @@ app.get("/test-error", (req, res) => {
 
 app.use(errorMiddleware);
 
-
-connectDB();
-
-
+// Start reminder job only in long-running environments (not Vercel serverless)
 if (process.env.NODE_ENV !== "test" && process.env.VERCEL !== "1") {
-  reminderJob.start();
-  logger.info("Reminder scheduler started");
+  connectDB()
+    .then(() => {
+      reminderJob.start();
+      logger.info("Reminder scheduler started");
+    })
+    .catch((err) => logger.error({ err }, "Failed to connect DB on startup"));
 }
 
 
