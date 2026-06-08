@@ -377,6 +377,12 @@ const swaggerSpec = swaggerJsdoc(options);
 export const setupSwagger = (app: Express) => {
 
   const swaggerUiOptions = {
+    // Load assets from CDN — required for Vercel serverless (node_modules not served)
+    customCssUrl: "https://unpkg.com/swagger-ui-dist@5/swagger-ui.css",
+    customJs: [
+      "https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js",
+      "https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js",
+    ],
     customCss: `
       .swagger-ui .topbar { display: none }
       .swagger-ui .info { margin: 20px 0; }
