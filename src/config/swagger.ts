@@ -368,8 +368,321 @@ All AI-generated insights (summaries, action items, decisions, follow-ups) inclu
         BearerAuth: [],
       },
     ],
+    paths: {
+      "/api/auth/register": {
+        post: {
+          tags: ["Authentication"],
+          summary: "Register a new user",
+          security: [],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["email", "password"],
+                  properties: {
+                    email: { type: "string", format: "email", example: "user@example.com" },
+                    password: { type: "string", minLength: 6, example: "SecurePass123!" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "User registered successfully" },
+            "400": { description: "Validation error or email already exists", $ref: "#/components/schemas/Error" },
+          },
+        },
+      },
+      "/api/auth/login": {
+        post: {
+          tags: ["Authentication"],
+          summary: "Login and get a JWT token",
+          security: [],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["email", "password"],
+                  properties: {
+                    email: { type: "string", format: "email", example: "user@example.com" },
+                    password: { type: "string", example: "SecurePass123!" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Login successful — returns JWT token",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "object",
+                        properties: {
+                          token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "401": { description: "Invalid credentials" },
+          },
+        },
+      },
+      "/api/meetings": {
+        get: {
+          tags: ["Meetings"],
+          summary: "Get all meetings (paginated)",
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { in: "query", name: "page", schema: { type: "integer", default: 1 } },
+            { in: "query", name: "limit", schema: { type: "integer", default: 10 } },
+            { in: "query", name: "sort", schema: { type: "string", example: "-createdAt" } },
+          ],
+          responses: {
+            "200": { description: "List of meetings" },
+            "401": { description: "Unauthorized" },
+          },
+        },
+        post: {
+          tags: ["Meetings"],
+          summary: "Create a new meeting",
+          security: [{ BearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["title", "transcript"],
+                  properties: {
+                    title: { type: "string", example: "Product Planning Meeting" },
+                    participants: { type: "array", items: { type: "string" }, example: ["Alice", "Bob"] },
+                    meetingDate: { type: "string", format: "date-time", example: "2024-06-07T10:00:00Z" },
+                    transcript: {
+                      type: "array",
+                      minItems: 1,
+                      items: { $ref: "#/components/schemas/TranscriptSegment" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Meeting created" },
+            "400": { description: "Validation error" },
+            "401": { description: "Unauthorized" },
+          },
+        },
+      },
+      "/api/meetings/{id}": {
+        get: {
+          tags: ["Meetings"],
+          summary: "Get a meeting by ID",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
+          responses: {
+            "200": { description: "Meeting details" },
+            "404": { description: "Meeting not found" },
+          },
+        },
+        patch: {
+          tags: ["Meetings"],
+          summary: "Update a meeting",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          requestBody: {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    participants: { type: "array", items: { type: "string" } },
+                    meetingDate: { type: "string", format: "date-time" },
+                    transcript: { type: "array", items: { $ref: "#/components/schemas/TranscriptSegment" } },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Meeting updated" },
+            "404": { description: "Meeting not found" },
+          },
+        },
+        delete: {
+          tags: ["Meetings"],
+          summary: "Delete a meeting",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Meeting deleted" },
+            "404": { description: "Meeting not found" },
+          },
+        },
+      },
+      "/api/meetings/{id}/analyze": {
+        post: {
+          tags: ["AI Analysis"],
+          summary: "Analyze a meeting with Groq AI",
+          description: "Triggers AI analysis extracting summary, action items, decisions, and follow-ups with transcript citations.",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" }, example: "507f1f77bcf86cd799439011" }],
+          responses: {
+            "200": { description: "Analysis complete — meeting updated with AI insights" },
+            "404": { description: "Meeting not found" },
+            "500": { description: "AI analysis failed" },
+          },
+        },
+      },
+      "/api/action-items": {
+        get: {
+          tags: ["Action Items"],
+          summary: "Get all action items",
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { in: "query", name: "status", schema: { type: "string", enum: ["PENDING", "IN_PROGRESS", "COMPLETED"] } },
+            { in: "query", name: "page", schema: { type: "integer", default: 1 } },
+            { in: "query", name: "limit", schema: { type: "integer", default: 10 } },
+          ],
+          responses: {
+            "200": { description: "List of action items" },
+            "401": { description: "Unauthorized" },
+          },
+        },
+        post: {
+          tags: ["Action Items"],
+          summary: "Create a manual action item",
+          security: [{ BearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["task", "meetingId"],
+                  properties: {
+                    task: { type: "string", example: "Prepare release notes" },
+                    assignee: { type: "string", example: "Bob" },
+                    dueDate: { type: "string", format: "date-time" },
+                    meetingId: { type: "string", example: "507f1f77bcf86cd799439011" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Action item created" },
+            "400": { description: "Validation error" },
+          },
+        },
+      },
+      "/api/action-items/overdue": {
+        get: {
+          tags: ["Action Items"],
+          summary: "Get overdue action items",
+          security: [{ BearerAuth: [] }],
+          responses: {
+            "200": { description: "List of overdue action items" },
+          },
+        },
+      },
+      "/api/action-items/{id}": {
+        get: {
+          tags: ["Action Items"],
+          summary: "Get action item by ID",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Action item details" },
+            "404": { description: "Not found" },
+          },
+        },
+        delete: {
+          tags: ["Action Items"],
+          summary: "Delete an action item",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Deleted successfully" },
+            "404": { description: "Not found" },
+          },
+        },
+      },
+      "/api/action-items/{id}/status": {
+        patch: {
+          tags: ["Action Items"],
+          summary: "Update action item status",
+          security: [{ BearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["status"],
+                  properties: {
+                    status: { type: "string", enum: ["PENDING", "IN_PROGRESS", "COMPLETED"] },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Status updated" },
+            "400": { description: "Invalid status transition" },
+          },
+        },
+      },
+      "/api/evaluation": {
+        get: {
+          tags: ["System"],
+          summary: "Get system evaluation / metrics",
+          security: [],
+          responses: {
+            "200": { description: "System evaluation data" },
+          },
+        },
+      },
+      "/health": {
+        get: {
+          tags: ["System"],
+          summary: "Health check",
+          security: [],
+          responses: {
+            "200": {
+              description: "Service is up",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      status: { type: "string", example: "UP" },
+                      timestamp: { type: "string", format: "date-time" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
-  apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+  apis: [],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
