@@ -243,7 +243,3 @@ Errors:
 ```
 
 ---
-
-## License
-
-MIT
